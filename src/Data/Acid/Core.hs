@@ -76,7 +76,7 @@ showQualifiedTypeRep tr = show tr
 
 -- | The basic Method class. Each Method has an indexed result type
 --   and a unique tag.
-class ( Typeable ev, SafeCopy ev
+class ( Typeable ev, SafeCopy ev, Show ev
       , Typeable (MethodResult ev), SafeCopy (MethodResult ev)) =>
       Method ev where
     type MethodResult ev

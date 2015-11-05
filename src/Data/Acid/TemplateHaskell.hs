@@ -85,7 +85,7 @@ getEventType eventName
 makeIsAcidic eventNames stateName tyvars constructors
     = do types <- mapM getEventType eventNames
          stateType' <- stateType
-         let preds = [ ''SafeCopy, ''Typeable ]
+         let preds = [ ''SafeCopy, ''Typeable,''Show ]
              ty = appT (conT ''IsAcidic) stateType
              handlers = zipWith makeEventHandler eventNames types
              cxtFromEvents = nub $ concat $ zipWith (eventCxts stateType' tyvars) eventNames types
@@ -215,8 +215,8 @@ makeEventHandler eventName eventType
 makeEventDataType eventName eventType
     = do let con = normalC eventStructName [ strictType notStrict (return arg) | arg <- args ]
          case args of
-          [_] -> newtypeD (return []) eventStructName tyvars con [''Typeable]
-          _   -> dataD (return []) eventStructName tyvars [con] [''Typeable]
+          [_] -> newtypeD (return []) eventStructName tyvars con [''Typeable,''Show]
+          _   -> dataD (return []) eventStructName tyvars [con] [''Typeable,''Show]
     where (tyvars, _cxt, args, _stateType, _resultType, _isUpdate) = analyseType eventName eventType
           eventStructName = mkName (structName (nameBase eventName))
           structName [] = []
@@ -259,7 +259,7 @@ instance (SafeCopy key, Typeable key
   type MethodState (MyUpdateEvent key val) = State key val
 -}
 makeMethodInstance eventName eventType
-    = do let preds = [ ''SafeCopy, ''Typeable ]
+    = do let preds = [ ''SafeCopy, ''Typeable,''Show ]
              ty = AppT (ConT ''Method) (foldl AppT (ConT eventStructName) (map VarT (allTyVarBndrNames tyvars)))
              structType = foldl appT (conT eventStructName) (map varT (allTyVarBndrNames tyvars))
          instanceD (cxt $ [ classP classPred [varT tyvar] | tyvar <- plainTyVarBndrNames tyvars, classPred <- preds ] ++ map return context)
@@ -280,7 +280,7 @@ makeMethodInstance eventName eventType
 --instance (SafeCopy key, Typeable key
 --         ,SafeCopy val, Typeable val) => UpdateEvent (MyUpdateEvent key val)
 makeEventInstance eventName eventType
-    = do let preds = [ ''SafeCopy, ''Typeable ]
+    = do let preds = [ ''SafeCopy, ''Typeable,''Show ]
              eventClass = if isUpdate then ''UpdateEvent else ''QueryEvent
              ty = AppT (ConT eventClass) (foldl AppT (ConT eventStructName) (map VarT (allTyVarBndrNames tyvars)))
          instanceD (cxt $ [ classP classPred [varT tyvar] | tyvar <- plainTyVarBndrNames tyvars, classPred <- preds ] ++ map return context)
