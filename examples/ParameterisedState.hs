@@ -33,7 +33,11 @@ newtype Store k = Store { store :: Map.Map k (Entry k) }
 deriving instance Typeable1 Store
 #endif
 
+#if MIN_VERSION_safecopy(0,9,5)
+instance (Ord k, SafeCopy k) => SafeCopy (Store k)
+#else
 instance (Ord k, Serialize k) => SafeCopy (Store k)
+#endif
 instance (Ord k, Serialize k) => Serialize (Store k)
 
 insertStore
