@@ -240,7 +240,7 @@ instance SafeCopy s => SafeCopy (Checkpoint s) where
         fromNested b = case runGetLazy safeGet b of
                          Left msg -> checkpointRestoreError msg
                          Right v  -> v
-
+    errorTypeName _ = "Checkpoint s"
 
 -- | Create an AcidState given an initial value.
 --
