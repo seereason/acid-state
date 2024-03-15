@@ -40,7 +40,7 @@ import Data.Acid.Abstract
 import Control.Concurrent             ( newEmptyMVar, putMVar, takeMVar, MVar )
 import Control.Exception              ( onException, evaluate, Exception, throwIO )
 import Control.Monad.State            ( runState )
-import Control.Monad                  ( join )
+import Control.Monad                  ( join, when )
 #if !MIN_VERSION_base(4,8,0)
 import Control.Applicative            ( (<$>), (<*>) )
 #endif
@@ -56,6 +56,7 @@ import GHC.Stack                      ( HasCallStack )
 import System.FilePath                ( (</>), takeDirectory )
 import System.FileLock
 import System.Directory               ( createDirectoryIfMissing )
+import System.IO                      ( hPutStrLn, stderr )
 
 
 {-| State container offering full ACID (Atomicity, Consistency, Isolation and Durability)
@@ -407,7 +408,8 @@ resumeLocalStateFrom directory initialState delayLocking serialisationLayer =
 
       eventsLog <- openFileLog eventsLogKey
       events <- readEntriesFrom eventsLog n
-      mapM_ (runColdMethod core) events
+      when trace (hPutStrLn stderr ("Replaying " <> show (length events) <> " events"))
+      mapM_ (\ev -> when trace (hPutStrLn stderr ("replaying event '" <> show ev <> "'")) >> runColdMethod core ev) events
       ensureLeastEntryId eventsLog n
       checkpointsLog <- openFileLog checkpointsLogKey
       stateCopy <- newIORef undefined
@@ -424,6 +426,7 @@ resumeLocalStateFrom directory initialState delayLocking serialisationLayer =
       maybe (throwIO (StateIsLocked path))
                             return =<< tryLockFile path Exclusive
 
+trace = True
 
 checkpointRestoreError msg
     = error $ "Could not parse saved checkpoint due to the following error: " ++ msg
