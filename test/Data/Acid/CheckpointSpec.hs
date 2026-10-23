@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 
@@ -12,7 +11,6 @@ import Control.Exception (bracket_)
 import Control.Monad.Reader (ask)
 import Control.Monad.State (modify)
 import Data.SafeCopy (base, deriveSafeCopy)
-import Data.Typeable (Typeable)
 import System.Directory (getTemporaryDirectory, removePathForcibly)
 import System.FilePath ((</>))
 
@@ -22,7 +20,6 @@ import Data.Acid.Local (Checkpoint, createCheckpointAndClose,
 import Data.Acid.Log (FileLog, askCurrentEntryId, closeFileLog, openFileLog)
 
 newtype Counter = Counter Int
-    deriving (Typeable)
 
 $(deriveSafeCopy 0 'base ''Counter)
 
@@ -96,12 +93,12 @@ spec = around withStateDir $
 -- Returns the number of checkpoints written while the state was open.
 closeAfter :: FilePath -> (AcidState Counter -> IO ()) -> IO Int
 closeAfter dir action = do
-    before <- checkpointCount dir
+    countBefore <- checkpointCount dir
     acid <- openLocalStateFrom dir (Counter 0)
     action acid
     createCheckpointAndClose acid
-    after <- checkpointCount dir
-    return (after - before)
+    countAfter <- checkpointCount dir
+    return (countAfter - countBefore)
 
 valueIn :: FilePath -> IO Int
 valueIn dir = do
